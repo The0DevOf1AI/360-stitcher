@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>360 Stitcher</title>
+  <meta name="description" content="Stitch the photos from a DJI drone sphere capture into a 360° panorama in your browser, then look around in the 360 viewer. Your photos never leave your computer.">
+  <meta name="theme-color" content="#1c1714">
+  <meta property="og:title" content="360 Stitcher">
+  <meta property="og:description" content="Stitch a DJI drone sphere capture into a 360° panorama in your browser. Photos never leave your computer.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <img class="hero-logo" src="logo.png" width="199" height="240" alt="360 Stitcher logo">
+      <div class="hero-text">
+        <h1>360 Stitcher</h1>
+        <p class="lead">Turn the photos from a DJI drone sphere capture into a 360° panorama, then look around inside it, right here in your browser.</p>
+        <p class="credit">Developed by Ahmad Alhasanat</p>
+        <ul class="badges">
+          <li>Photos stay on your computer</li>
+          <li>Nothing to install</li>
+          <li>Built-in 360 viewer</li>
+        </ul>
+        <div class="row">
+          <a class="btn primary" href="#stitch">Stitch a panorama</a>
+          <a class="btn on-dark" href="#viewer-section" id="try-viewer">Try the 360 viewer</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card" id="stitch" aria-labelledby="stitch-title">
+      <h2 id="stitch-title">Stitch a panorama</h2>
+
+      <div class="step">
+        <span class="step-num" aria-hidden="true">1</span>
+        <div class="step-body">
+          <h3>Choose one capture</h3>
+          <p class="muted">All the photos from a single capture, together with the DJI CSV file that came with them.</p>
+          <div class="drop" id="drop">
+            <p class="drop-title">Drop the capture folder or its files here</p>
+            <div class="row center">
+              <button type="button" class="btn" id="pick-folder-btn">Choose folder</button>
+              <button type="button" class="btn ghost" id="pick-files-btn">Choose files</button>
+            </div>
+            <input type="file" id="pick-folder" webkitdirectory multiple hidden>
+            <input type="file" id="pick-files" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.csv" hidden>
+          </div>
+          <div id="selection" class="selection" aria-live="polite" hidden></div>
+          <p id="engine" class="muted small" aria-live="polite" hidden></p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num" aria-hidden="true">2</span>
+        <div class="step-body">
+          <h3>Pick the output</h3>
+          <div class="fields">
+            <label class="field"><span>Panorama resolution</span>
+              <select id="resolution">
+                <option value="2000">4000 × 2000 — Preview</option>
+                <option value="4000">8000 × 4000 — High</option>
+              </select>
+            </label>
+            <label class="field"><span>File format</span>
+              <select id="format">
+                <option value="jpg">JPG</option>
+                <option value="png">PNG (lossless, larger file)</option>
+              </select>
+            </label>
+          </div>
+          <p class="muted small" id="time-hint"></p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num" aria-hidden="true">3</span>
+        <div class="step-body">
+          <h3>Stitch</h3>
+          <div class="row">
+            <button type="button" class="btn primary" id="stitch-btn" disabled>Stitch panorama</button>
+            <button type="button" class="btn ghost" id="cancel-btn" hidden>Cancel</button>
+          </div>
+          <div id="progress" class="progress" hidden>
+            <div class="bar" id="bar" role="progressbar" aria-label="Stitching progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill" id="fill"></div></div>
+            <p class="status"><span id="status"></span> <span class="muted" id="elapsed"></span></p>
+            <details><summary>Details</summary><pre id="log"></pre></details>
+          </div>
+          <p id="error" class="error" role="alert" hidden></p>
+        </div>
+      </div>
+
+      <div id="result" class="result" hidden>
+        <img id="result-thumb" alt="Preview of the stitched panorama">
+        <div class="result-side">
+          <h3>Your panorama is ready</h3>
+          <p id="result-info" class="muted"></p>
+          <div class="row">
+            <button type="button" class="btn primary" id="view-result">Look around in 360</button>
+            <a class="btn" id="download" download>Download panorama</a>
+          </div>
+          <p class="small" id="report-line" hidden><a id="report" download>Download alignment report</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="viewer-section" aria-labelledby="viewer-title">
+      <div class="card-head">
+        <h2 id="viewer-title">360 viewer</h2>
+        <div class="row">
+          <button type="button" class="btn ghost" id="sample-btn">View sample</button>
+          <button type="button" class="btn ghost" id="open-btn">Open a panorama…</button>
+          <input type="file" id="open-file" accept="image/jpeg,image/png,image/webp" hidden>
+        </div>
+      </div>
+      <div class="viewer" id="viewer">
+        <canvas id="viewer-canvas" tabindex="0" aria-label="360 panorama. Drag or use the arrow keys to look around. Scroll, pinch, or press plus and minus to zoom."></canvas>
+        <div class="viewer-empty" id="viewer-empty"><p>Stitch a panorama, open one from your computer, or view the sample.</p></div>
+        <div class="viewer-tools">
+          <button type="button" class="tool" id="reset-btn" title="Reset view" aria-label="Reset view">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="tool" id="fullscreen-btn" title="Full screen" aria-label="Full screen">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="muted small">Drag to look around · Scroll or pinch to zoom · Double-click for full screen · Black areas are missing image coverage</p>
+    </section>
+
+    <section class="card" id="about" aria-labelledby="about-title">
+      <h2 id="about-title">How it works</h2>
+      <div class="cols">
+        <div>
+          <h3>From photos to a sphere</h3>
+          <p>The DJI CSV places each photo using the drone's gimbal angles. Matching detail between overlapping photos then refines every camera rotation and the lens focal length, and the photos are blended into a 2:1 equirectangular panorama that any 360 viewer can show.</p>
+          <p>Stitching runs on your own computer inside this page, so a capture takes a few minutes. Your photos are never uploaded.</p>
+        </div>
+        <div>
+          <h3>Good to know</h3>
+          <ul>
+            <li>Use Chrome, Edge or Firefox on a computer with at least 8 GB of memory. Phones and tablets don't have enough.</li>
+            <li>The first visit downloads about 35 MB of image libraries. Your browser keeps them for next time.</li>
+            <li>Without a compatible CSV you get a general panorama, which may not suit the 360 viewer.</li>
+            <li>Missing shots and sky the drone didn't photograph stay black. Nothing is invented to fill them.</li>
+            <li>Use the JPG photos the drone saved. Convert DNG/RAW first; TIFF works when uncompressed or LZW-compressed.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <p>360 Stitcher · Developed by Ahmad Alhasanat</p>
+    <p class="muted small">Runs in your browser with Pyodide, OpenCV, NumPy, SciPy and Pillow.</p>
+  </footer>
+</body>
+</html>
